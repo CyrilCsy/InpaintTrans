@@ -21,10 +21,10 @@ class GeneratorInpTrans(nn.Module):
         self.position_encoding = position_encoding
 
     def forward(self, nt: NestedTensor):
-        src, src_pos = self.sampler(nt)  # (b, n ,dim)
+        src, src_pos, src0 = self.sampler(nt)  # (b, n ,dim)
 
         pos = self.position_encoding(NestedTensor(nt.tensors, None))
-        nts = self.backbone(nt, pos, src, src_pos)
+        nts = self.backbone(nt, pos, src0, src_pos)
 
         tgt, mask = nts[-1].decompose()
         b, c, h, w = tgt.size()
@@ -53,7 +53,8 @@ class GeneratorInpTrans(nn.Module):
 
 def build_generator_inptr(config):
     sampler = build_sampler(config)
-    backbone_cnn = build_backbone_cnn(config)
+    dim = sampler.sample_dim
+    backbone_cnn = build_backbone_cnn(config, dim)
     transformer_decoder = build_transformer_decoder(config)
     decoder = build_decoder_cnn(config)
     position_encoding = build_position_encoding(config)

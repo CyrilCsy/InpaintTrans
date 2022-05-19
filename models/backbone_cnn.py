@@ -35,10 +35,14 @@ class BackboneCNN(nn.Module):
         self.norm_act4 = nn.Sequential(nn.InstanceNorm2d(out_channels, track_running_stats=False), nn.ReLU(True))
 
         num_heads = 6
-        self.linear1 = nn.Linear(dim, out_channels//8)  # 64
+        self.linear1 = nn.Linear(out_channels//4, out_channels//8)  # 64
         self.linear2 = nn.Linear(dim, out_channels//4)  # 128
         self.linear3 = nn.Linear(dim, out_channels//2)  # 256
-        self.linear4 = nn.Linear(dim, out_channels)     # 512
+        # self.linear4 = nn.Linear(out_channels//2, out_channels)     # 512
+        self.norm1 = nn.LayerNorm(out_channels//8)
+        self.norm2 = nn.LayerNorm(out_channels//4)
+        self.norm3 = nn.LayerNorm(out_channels//2)
+        # self.norm4 = nn.LayerNorm(out_channels)
 
         self._reset_parameters()
 
@@ -61,23 +65,27 @@ class BackboneCNN(nn.Module):
         x = self.norm_act1(x)
         outs.append(NestedTensor(x, mask))
 
-        mem = self.linear1(memory)
+        mem2 = self.norm2(self.linear2(memory))
+        mem = self.norm1(self.linear1(mem2))
         res = attention_for_hole(x, mem)
         x = x * mask + res * (1 - mask)
+
         x, mask = self.conv2(x, mask)
         x = self.norm_act2(x)
         outs.append(NestedTensor(x, mask))
 
-        mem = self.linear2(memory)
+        mem = mem2
         res = attention_for_hole(x, mem)
         x = x * mask + res * (1 - mask)
+
         x, mask = self.conv3(x, mask)
         x = self.norm_act3(x)
         outs.append(NestedTensor(x, mask))
 
-        mem = self.linear3(memory)
+        mem = self.norm3(self.linear3(memory))
         res = attention_for_hole(x, mem)
         x = x * mask + res * (1 - mask)
+
         x, mask = self.conv4(x, mask)
         x = self.norm_act4(x)
         outs.append(NestedTensor(x, mask))
@@ -108,7 +116,7 @@ def attention_for_hole(features, keys, values=None):
     return out
 
 
-def build_backbone_cnn(config):
-    dim = config.dim_model
-    model = BackboneCNN(in_channels=4, out_channels=dim, threshold=0.5)
+def build_backbone_cnn(config, dim):
+    out_channels = config.dim_model
+    model = BackboneCNN(in_channels=4, out_channels=out_channels, dim=dim, threshold=0.5)
     return model
