@@ -1,0 +1,66 @@
+MODE: 1             # 1: train, 2: test, 3: eval
+MASK: 2             # 1: center, 2: external
+MASK_REVERSE: True  # if true 0 for hole
+
+SEED: 10            # random seed
+GPUs: [0]            # list of gpu ids
+DEBUG: False            # turns on debugging mode
+VERBOSE: 0          # turns on verbose mode in the output console
+
+TRAIN_FLIST: /home/cyril/Study/Datasets/flist/psv_train.flist
+VAL_FLIST: /home/cyril/Study/Datasets/flist/psv_test.flist
+TEST_FLIST: /home/cyril/Study/Datasets/flist/psv_test.flist
+
+TRAIN_MASK_FLIST: /home/cyril/Study/Datasets/flist/aug_masks_3.flist
+VAL_MASK_FLIST: /home/cyril/Study/Datasets/flist/aug_masks_3.flist
+TEST_MASK_FLIST: /home/cyril/Study/Datasets/flist/aug_masks_3.flist
+
+PRETRAINED: False
+PRETRAINED_PATH: None
+
+LR: 0.0001                    # learning rate
+D2G_LR: 0.1                   # discriminator/generator learning rate ratio
+BETA1: 0.0                    # adam optimizer beta1
+BETA2: 0.9                    # adam optimizer beta2
+THREADS: 4                    # number of threads for data loader to use
+BATCH_SIZE: 6                 # input batch size for training
+INPUT_SIZE: 256               # input image size for training 0 for original size
+
+L1_LOSS_WEIGHT: 1             # l1 loss weight
+STYLE_LOSS_WEIGHT: 250        # style loss weight
+CONTENT_LOSS_WEIGHT: 0.1      # perceptual loss weight
+INPAINT_ADV_LOSS_WEIGHT: 0.1  # adversarial loss weight
+
+GAN_LOSS: nsgan               # nsgan | lsgan | hinge
+GAN_POOL_SIZE: 0              # fake images pool size
+
+SAVE_INTERVAL0: 1000          # how many iterations to wait before saving model (0: never)
+SAVE_INTERVAL1: 4000          # how many iterations to wait before saving model with num of intervals(0: never)
+SAMPLE_INTERVAL: 0         # how many iterations to wait before sampling (0: never)
+SAMPLE_SIZE: 12               # number of images to sample
+
+START_EPOCH: 1                # start index of epoch for training
+MAX_EPOCHS: 40                # maximum number of epochs to train the model
+EVAL_INTERVAL: 0              # how many iterations to wait before model evaluation (0: never)
+LOG_INTERVAL: 10              # how many iterations to wait before logging training status (0: never)
+
+dim_model: 512
+hidden_dim: 512
+nhead: 8
+enc_layers: 6
+dec_layers: 6
+dim_feedforward: 1024
+dropout: 0.1
+activation_trans: "relu"
+norm_pre: False
+is_sem_embed: Flase
+is_reshape: False
+position_embedding: 'v2'
+
+
+#MODEL: 1            # 1: edge model, 2: inpaint model, 3: edge-inpaint model, 4: joint model
+#EDGE: 1             # 1: canny, 2: external
+#NMS: 1              # 0: no non-max-suppression, 1: applies non-max-suppression on the external edges by multiplying by Canny
+#SIGMA: 2                      # standard deviation of the Gaussian filter used in Canny edge detector (0: random, -1: no edge)
+#EDGE_THRESHOLD: 0.5           # edge detection threshold
+#FM_LOSS_WEIGHT: 10            # feature-matching loss weight???
