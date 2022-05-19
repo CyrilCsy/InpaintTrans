@@ -85,7 +85,7 @@ def build_sampler(config):
     model = Sampler(input_size=256,
                     patch_size=13,
                     stride=9,
-                    num_patch=32,
+                    num_patch=None,
                     in_channel=3,
                     out_dim=512,
                     threshold=1.0,
