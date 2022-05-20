@@ -154,10 +154,11 @@ class BaseLine(BaseModel):
         return outputs, gen_loss, dis_loss, logs
 
     def forward(self, images, masks):   # mask: 0 for hole
-        images_masked = images * masks.float()
+        # images_masked = images * masks.float()
 
         # inputs = torch.cat((images_masked, masks), dim=1)
-        nt = NestedTensor(images_masked, masks)
+
+        nt = NestedTensor(images, masks)
         outputs = self.generator(nt)
         return outputs
 

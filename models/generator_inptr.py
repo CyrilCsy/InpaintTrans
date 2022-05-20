@@ -24,8 +24,10 @@ class GeneratorInpTrans(nn.Module):
     def forward(self, nt: NestedTensor):
         src, src_pos = self.sampler(nt)  # (b, n ,dim)
 
+        x, mask = nt.decompose()
+        x = x * mask.float()
         pos = self.position_encoding(NestedTensor(nt.tensors, None))
-        nts, memory = self.backbone(nt, pos, src, src_pos)
+        nts, memory = self.backbone(NestedTensor(x, mask), pos, src, src_pos)
 
         tgt, mask = nts[-1].decompose()
         b, c, h, w = tgt.size()
