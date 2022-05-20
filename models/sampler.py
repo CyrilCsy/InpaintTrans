@@ -59,8 +59,6 @@ class Sampler(nn.Module):
         pos_unfold = F.unfold(pos, kernel_size=self.p_size, dilation=1, stride=s, padding=0)
         mask_idx = torch.mean(mask_unfold, dim=1, keepdim=False).squeeze(dim=1)
         mask_idx = (~(mask_idx > self.th)).to(dtype=torch.float)
-        print(torch.sum(mask_idx, dim=-1))
-        print(mask_idx.size())
         idx = torch.sort(torch.multinomial(mask_idx, n)).values
         idx_x = torch.unsqueeze(idx, dim=1).expand(b, c * p * p, n)
         idx_pos = torch.unsqueeze(idx, dim=1).expand(b, d, n)
