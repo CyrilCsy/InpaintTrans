@@ -18,13 +18,13 @@ class BackboneCNN(nn.Module):
         self.pad = nn.ReflectionPad2d(3)
 
         self.conv1 = PartialConv2d(in_channels=in_channels, out_channels=out_channels // 8, kernel_size=7, stride=1,
-                                   padding=0, return_mask=True, threshold=0.75)  # in -> 64
+                                   padding=0, return_mask=True, threshold=threshold[0])  # in -> 64
         self.conv2 = PartialConv2d(in_channels=out_channels // 8, out_channels=out_channels // 4, kernel_size=5,
-                                   stride=2, padding=2, return_mask=True, threshold=0.5)  # 64 -> 128
+                                   stride=2, padding=2, return_mask=True, threshold=threshold[1])  # 64 -> 128
         self.conv3 = PartialConv2d(in_channels=out_channels // 4, out_channels=out_channels // 2, kernel_size=3,
-                                   stride=2, padding=1, return_mask=True, threshold=0.25)  # 128 -> 256
+                                   stride=2, padding=1, return_mask=True, threshold=threshold[2])  # 128 -> 256
         self.conv4 = PartialConv2d(in_channels=out_channels // 2, out_channels=out_channels, kernel_size=3,
-                                   stride=2, padding=1, return_mask=True, threshold=0.25)  # 256 -> 512
+                                   stride=2, padding=1, return_mask=True, threshold=threshold[3])  # 256 -> 512
 
         self.norm_act1 = nn.Sequential(nn.InstanceNorm2d(out_channels // 8, track_running_stats=False),
                                        nn.ReLU(True))
@@ -62,12 +62,14 @@ class BackboneCNN(nn.Module):
 
         if self.in_channels == 4:
             x = torch.cat((x, mask), dim=1)
+
         x, mask = self.conv1(x, mask)
 
         mem2 = self.linear2(memory)
         mem = self.linear1(mem2)
         res = attention_for_hole(x, mem)
         x = x * mask + res * (1 - mask)
+
         x = self.norm_act1(x)
         outs.append(NestedTensor(x, mask))
 
@@ -76,6 +78,7 @@ class BackboneCNN(nn.Module):
         mem = mem2
         res = attention_for_hole(x, mem)
         x = x * mask + res * (1 - mask)
+
         x = self.norm_act2(x)
         outs.append(NestedTensor(x, mask))
 
@@ -84,6 +87,7 @@ class BackboneCNN(nn.Module):
         mem = self.linear3(memory)
         res = attention_for_hole(x, mem)
         x = x * mask + res * (1 - mask)
+
         x = self.norm_act3(x)
         outs.append(NestedTensor(x, mask))
 
@@ -92,6 +96,7 @@ class BackboneCNN(nn.Module):
         mem = self.linear4(mem)
         res = attention_for_hole(x, mem)
         x = x * mask + res * (1 - mask)
+
         x = self.norm_act4(x)
         outs.append(NestedTensor(x, mask))
 
@@ -123,5 +128,5 @@ def attention_for_hole(features, keys, values=None):
 
 def build_backbone_cnn(config, dim):
     out_channels = config.dim_model
-    model = BackboneCNN(in_channels=4, out_channels=out_channels, dim=dim, threshold=0.25)
+    model = BackboneCNN(in_channels=4, out_channels=out_channels, dim=dim, threshold=[0.5, 0.5, 0.25, 0.25])
     return model
