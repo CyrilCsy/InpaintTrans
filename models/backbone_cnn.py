@@ -18,13 +18,13 @@ class BackboneCNN(nn.Module):
         self.pad = nn.ReflectionPad2d(3)
 
         self.conv1 = PartialConv2d(in_channels=in_channels, out_channels=out_channels // 8, kernel_size=7, stride=1,
-                                   padding=0, return_mask=True, threshold=threshold)  # in -> 64
+                                   padding=0, return_mask=True, threshold=0.75)  # in -> 64
         self.conv2 = PartialConv2d(in_channels=out_channels // 8, out_channels=out_channels // 4, kernel_size=5,
-                                   stride=2, padding=2, return_mask=True, threshold=threshold)  # 64 -> 128
+                                   stride=2, padding=2, return_mask=True, threshold=0.5)  # 64 -> 128
         self.conv3 = PartialConv2d(in_channels=out_channels // 4, out_channels=out_channels // 2, kernel_size=3,
-                                   stride=2, padding=1, return_mask=True, threshold=threshold)  # 128 -> 256
+                                   stride=2, padding=1, return_mask=True, threshold=0.25)  # 128 -> 256
         self.conv4 = PartialConv2d(in_channels=out_channels // 2, out_channels=out_channels, kernel_size=3,
-                                   stride=2, padding=1, return_mask=True, threshold=threshold)  # 256 -> 512
+                                   stride=2, padding=1, return_mask=True, threshold=0.25)  # 256 -> 512
 
         self.norm_act1 = nn.Sequential(nn.InstanceNorm2d(out_channels // 8, track_running_stats=False),
                                        nn.ReLU(True))
