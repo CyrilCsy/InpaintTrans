@@ -15,26 +15,26 @@ class GeneratorInpTrans(nn.Module):
         super(GeneratorInpTrans, self).__init__()
 
         self.sampler = sampler
+        dim = sampler.dim
         self.backbone = backbone
         self.transformer_decoder = transformer
         self.decoder = decoder
         self.position_encoding = position_encoding
 
     def forward(self, nt: NestedTensor):
-        src, src_pos, src0 = self.sampler(nt)  # (b, n ,dim)
+        src, src_pos = self.sampler(nt)  # (b, n ,dim)
 
         pos = self.position_encoding(NestedTensor(nt.tensors, None))
-        nts = self.backbone(nt, pos, src0, src_pos)
+        nts, memory = self.backbone(nt, pos, src, src_pos)
 
         tgt, mask = nts[-1].decompose()
         b, c, h, w = tgt.size()
         tgt = tgt.flatten(2).permute(0, 2, 1)
         mask = mask.flatten(2).permute(0, 2, 1).squeeze(dim=-1)
-
         tgt_pos = F.interpolate(pos, scale_factor=0.125, mode='bilinear')
         tgt_pos = tgt_pos.flatten(2).permute(0, 2, 1)
         x = self.transformer_decoder(x=tgt,
-                                     memory=src,
+                                     memory=memory,
                                      mask=mask,
                                      pos=tgt_pos,
                                      memory_pos=src_pos)

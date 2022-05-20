@@ -38,10 +38,11 @@ class BackboneCNN(nn.Module):
         self.linear1 = nn.Linear(out_channels//4, out_channels//8)  # 64
         self.linear2 = nn.Linear(dim, out_channels//4)  # 128
         self.linear3 = nn.Linear(dim, out_channels//2)  # 256
-        # self.linear4 = nn.Linear(out_channels//2, out_channels)     # 512
-        self.norm1 = nn.LayerNorm(out_channels//8)
-        self.norm2 = nn.LayerNorm(out_channels//4)
-        self.norm3 = nn.LayerNorm(out_channels//2)
+        self.linear4 = nn.Linear(out_channels//2, out_channels)     # 512
+        self.norm = nn.LayerNorm(out_channels)
+        # self.norm1 = nn.LayerNorm(out_channels//8)
+        # self.norm2 = nn.LayerNorm(out_channels//4)
+        # self.norm3 = nn.LayerNorm(out_channels//2)
         # self.norm4 = nn.LayerNorm(out_channels)
 
         self._reset_parameters()
@@ -62,35 +63,39 @@ class BackboneCNN(nn.Module):
         if self.in_channels == 4:
             x = torch.cat((x, mask), dim=1)
         x, mask = self.conv1(x, mask)
+
+        mem2 = self.linear2(memory)
+        mem = self.linear1(mem2)
+        res = attention_for_hole(x, mem)
+        x = x * mask + res * (1 - mask)
         x = self.norm_act1(x)
         outs.append(NestedTensor(x, mask))
 
-        mem2 = self.norm2(self.linear2(memory))
-        mem = self.norm1(self.linear1(mem2))
-        res = attention_for_hole(x, mem)
-        x = x * mask + res * (1 - mask)
-
         x, mask = self.conv2(x, mask)
-        x = self.norm_act2(x)
-        outs.append(NestedTensor(x, mask))
 
         mem = mem2
         res = attention_for_hole(x, mem)
         x = x * mask + res * (1 - mask)
+        x = self.norm_act2(x)
+        outs.append(NestedTensor(x, mask))
 
         x, mask = self.conv3(x, mask)
+
+        mem = self.linear3(memory)
+        res = attention_for_hole(x, mem)
+        x = x * mask + res * (1 - mask)
         x = self.norm_act3(x)
         outs.append(NestedTensor(x, mask))
 
-        mem = self.norm3(self.linear3(memory))
+        x, mask = self.conv4(x, mask)
+
+        mem = self.linear4(mem)
         res = attention_for_hole(x, mem)
         x = x * mask + res * (1 - mask)
-
-        x, mask = self.conv4(x, mask)
         x = self.norm_act4(x)
         outs.append(NestedTensor(x, mask))
 
-        return outs
+        return outs, self.norm(mem)
 
 
 def attention_for_hole(features, keys, values=None):

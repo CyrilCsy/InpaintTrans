@@ -26,9 +26,9 @@ class Sampler(nn.Module):
         self.dim = out_dim
         self.pos_enc = position_encoding
 
-        self.to_patch_embedding = nn.Linear(self.sample_dim, out_dim)
-        self.norm = nn.LayerNorm(out_dim)
-        self._reset_parameters()
+        # self.to_patch_embedding = nn.Linear(self.sample_dim, out_dim)
+        # self.norm = nn.LayerNorm(out_dim)
+        # self._reset_parameters()
 
     def forward(self, nt: NestedTensor):
         x, mask = nt.decompose()
@@ -64,15 +64,14 @@ class Sampler(nn.Module):
         idx_pos = torch.unsqueeze(idx, dim=1).expand(b, d, n)
         x_sample = torch.gather(x_unfold, dim=-1, index=idx_x)
         pos_sample = torch.gather(pos_unfold, dim=-1, index=idx_pos)
-
-        x_sample0 = x_sample.permute(0, 2, 1)
-        x_sample = self.to_patch_embedding(x_sample0)
-        x_sample = self.norm(x_sample)
-
+        x_sample = x_sample.permute(0, 2, 1)
         pos_sample = pos_sample.permute(0, 2, 1)
+
+        # x_sample = self.to_patch_embedding(x_sample)
+        # x_sample = self.norm(x_sample)
         # x, pos: (b, n, dim)
-        assert x_sample.size() == pos_sample.size()
-        return x_sample, pos_sample, x_sample0
+        # assert x_sample.size() == pos_sample.size()
+        return x_sample, pos_sample
 
     def _reset_parameters(self):  # init weight with xaiver_uniform
         for p in self.parameters():
