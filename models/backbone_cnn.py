@@ -123,5 +123,5 @@ def attention_for_hole(features, keys, values=None):
 
 def build_backbone_cnn(config, dim):
     out_channels = config.dim_model
-    model = BackboneCNN(in_channels=4, out_channels=out_channels, dim=dim, threshold=0.5)
+    model = BackboneCNN(in_channels=4, out_channels=out_channels, dim=dim, threshold=0.25)
     return model
