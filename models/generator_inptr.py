@@ -35,11 +35,11 @@ class GeneratorInpTrans(nn.Module):
         mask = mask.flatten(2).permute(0, 2, 1).squeeze(dim=-1)
         tgt_pos = F.interpolate(pos, scale_factor=0.125, mode='bilinear')
         tgt_pos = tgt_pos.flatten(2).permute(0, 2, 1)
-        x = self.transformer_decoder(x=tgt,
-                                     memory=memory,
-                                     mask=mask,
-                                     pos=tgt_pos,
-                                     memory_pos=src_pos)
+        x, attn_weights = self.transformer_decoder(x=tgt,
+                                                   memory=memory,
+                                                   mask=mask,
+                                                   pos=tgt_pos,
+                                                   memory_pos=src_pos)
         # x = self.transformer(src=src,
         #                      tgt=tgt,
         #                      src_mask=None,
@@ -47,8 +47,8 @@ class GeneratorInpTrans(nn.Module):
         #                      src_pos_embed=src_pos,
         #                      tgt_pos_embed=tgt_pos)
         x = x.permute(0, 2, 1).reshape(b, c, h, w)
-        # attn_map = attn_weights.permute()
-        x = self.decoder(x, nts)
+        attn_map = attn_weights.permute(0, 2, 1)
+        x = self.decoder(x, nts, attn_map)
 
         return x
 

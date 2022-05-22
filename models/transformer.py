@@ -174,10 +174,10 @@ class TransformerDecoder(nn.Module):
                 ):
         output = x
         for layer in self.layers:
-            output = layer(output, memory, mask, pos, memory_pos, sem)
+            output, attn_weights = layer(output, memory, mask, pos, memory_pos, sem)
         if self.norm is not None:
             output = self.norm(output)
-        return output
+        return output, attn_weights
 
 
 class TransformerDecoderLayer(nn.Module):
@@ -209,7 +209,7 @@ class TransformerDecoderLayer(nn.Module):
                      ):
         q = k = with_sem_embed(with_pos_embed(x, pos), sem)
         v = x
-        x2, _ = self.self_attn(query=q, key=k, value=v, key_padding_mask=mask)
+        x2, attn_weights = self.self_attn(query=q, key=k, value=v, key_padding_mask=mask)
         x = x + self.dropout1(x2)
         x = self.norm1(x)
 
@@ -222,7 +222,7 @@ class TransformerDecoderLayer(nn.Module):
         x2 = self.linear2(self.dropout(self.activation(self.linear1(x))))
         x = x + self.dropout3(x2)
         x = self.norm3(x)
-        return x
+        return x, attn_weights
 
     def forward_pre(self,
                     x, memory,

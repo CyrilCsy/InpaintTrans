@@ -57,24 +57,43 @@ class DecoderCNN(nn.Module):
             if p.dim() > 1:
                 nn.init.kaiming_normal_(p, a=0, mode='fan_in')
 
-    def forward(self, x, nts=None):
+    def forward(self, x, nts=None, attn_map=None):
+        x = x + self.attention_transfer(x, attn_map)
         if self.skip_con:
             x = torch.cat((x, nts[-1].tensors), dim=1)
         x = self.dec1(x)
 
+        x = x + self.attention_transfer(x, attn_map)
         if self.skip_con:
             x = torch.cat((x, nts[-2].tensors), dim=1)
         x = self.dec2(x)
 
+        x = x + self.attention_transfer(x, attn_map)
         if self.skip_con:
             x = torch.cat((x, nts[-3].tensors), dim=1)
         x = self.dec3(x)
 
+        x = x + self.attention_transfer(x, attn_map)
         if self.skip_con:
             x = torch.cat((x, nts[-4].tensors), dim=1)
         x = self.dec4(x)
+
         x = (torch.tanh(x) + 1) / 2
         return x
+
+    def attention_transfer(self, x, attn_map):
+        b, c, h, w = x.size()
+        feature = self.extract_image_patches(x, 32)   # (b,n*n,p*p*c)
+        out = torch.bmm(attn_map, feature)
+        out = torch.reshape(out, [b, 32, 32, h//32, w//32, c])
+        out = out.permute(0, 5, 1, 3, 2, 4).reshape(b, c, h, w)
+        return out
+
+    def extract_image_patches(self, img, num):
+        b, c, h, w = img.size()
+        img = torch.reshape(img, [b, c, num, h//num, num, w//num])
+        img = img.permute([0, 2, 4, 3, 5, 1]).reshape(b, num * num, -1)
+        return img
 
 
 def build_decoder_cnn(config):

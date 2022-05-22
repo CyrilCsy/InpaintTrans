@@ -92,7 +92,8 @@ class BackboneCNN(nn.Module):
         outs.append(NestedTensor(x, mask))
 
         x, mask = self.conv4(x, mask)
-
+        print('mask_ratio', 1 - torch.mean(mask, dim=(1,2,3)))
+        print('mask_num', 1024 - torch.sum(mask, dim=(1,2,3)))
         mem = self.linear4(mem)
         res = attention_for_hole(x, mem)
         x = x * mask + res * (1 - mask)
