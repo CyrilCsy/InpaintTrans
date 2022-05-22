@@ -25,7 +25,7 @@ class GeneratorInpTrans(nn.Module):
         src, src_pos = self.sampler(nt)  # (b, n ,dim)
 
         x, mask = nt.decompose()
-        x = x * mask.float()
+        # x = x * mask.float()
         pos = self.position_encoding(NestedTensor(nt.tensors, None))
         nts, memory = self.backbone(NestedTensor(x, mask), pos, src, src_pos)
 
