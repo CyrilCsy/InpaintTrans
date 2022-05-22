@@ -57,7 +57,7 @@ class DecoderCNN(nn.Module):
             nn.InstanceNorm2d(128, track_running_stats=False),
             nn.ReLU(True)
         )
-        self.conv3 = nn.Sequential(
+        self.conv4 = nn.Sequential(
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=1, stride=1, padding=0),
             nn.InstanceNorm2d(64, track_running_stats=False),
             nn.ReLU(True)
