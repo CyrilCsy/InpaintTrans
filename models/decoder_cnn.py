@@ -8,48 +8,64 @@ from typing import Optional, List
 class DecoderCNN(nn.Module):
     def __init__(self, dim=512, skip_connect=True):
         super(DecoderCNN, self).__init__()
-        cat = 2 if skip_connect else 1
+        # cat = 2 if skip_connect else 1
+        cat = 2
         self.skip_con = skip_connect
         self.dec1 = nn.Sequential(
-                nn.ConvTranspose2d(in_channels=dim * cat, out_channels=dim // 2, kernel_size=4, stride=2, padding=1),
-                nn.InstanceNorm2d(dim // 2, track_running_stats=False),
+                nn.Conv2d(in_channels=1024, out_channels=512, kernel_size=1, stride=1, padding=0),
+                nn.InstanceNorm2d(512, track_running_stats=False),
+                nn.ReLU(True),
+                nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=4, stride=2, padding=1),
+                nn.InstanceNorm2d(256, track_running_stats=False),
                 nn.ReLU(True))  # 512 -> 256
+
         self.dec2 = nn.Sequential(
-                nn.ConvTranspose2d(in_channels=dim // 2 * cat, out_channels=dim // 4, kernel_size=4, stride=2, padding=1),
-                nn.InstanceNorm2d(dim // 4, track_running_stats=False),
+                nn.Conv2d(in_channels=512, out_channels=256, kernel_size=1, stride=1, padding=0),
+                nn.InstanceNorm2d(256, track_running_stats=False),
+                nn.ReLU(True),
+                nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=4, stride=2, padding=1),
+                nn.InstanceNorm2d(128, track_running_stats=False),
                 nn.ReLU(True))  # 256 -> 128
+
         self.dec3 = nn.Sequential(
-                nn.ConvTranspose2d(in_channels=dim // 4 * cat, out_channels=dim // 8, kernel_size=4, stride=2, padding=1),
-                nn.InstanceNorm2d(dim // 8, track_running_stats=False),
+                nn.Conv2d(in_channels=256, out_channels=128, kernel_size=1, stride=1, padding=0),
+                nn.InstanceNorm2d(128, track_running_stats=False),
+                nn.ReLU(True),
+                nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4, stride=2, padding=1),
+                nn.InstanceNorm2d(64, track_running_stats=False),
                 nn.ReLU(True))  # 128 -> 64
+
         self.dec4 = nn.Sequential(
                 # nn.ReflectionPad2d(3),
-                nn.Conv2d(in_channels=dim // 8 * cat, out_channels=3, kernel_size=1, stride=1, padding=0))   # 64 -> 3
-        # self.decs = []
-        # self.decs.extend(
-        #     [nn.Sequential(
-        #         nn.ConvTranspose2d(in_channels=dim * cat, out_channels=dim // 2, kernel_size=4, stride=2, padding=1),
-        #         nn.InstanceNorm2d(dim // 2, track_running_stats=False),
-        #         nn.ReLU(True)
-        #     ),  # 512 -> 256
-        #
-        #     nn.Sequential(
-        #         nn.ConvTranspose2d(in_channels=dim // 2 * cat, out_channels=dim // 4, kernel_size=4, stride=2, padding=1),
-        #         nn.InstanceNorm2d(dim // 4, track_running_stats=False),
-        #         nn.ReLU(True)
-        #     ),  # 256 -> 128
-        #
-        #     nn.Sequential(
-        #         nn.ConvTranspose2d(in_channels=dim // 4 * cat, out_channels=dim // 8, kernel_size=4, stride=2, padding=1),
-        #         nn.InstanceNorm2d(dim // 8, track_running_stats=False),
-        #         nn.ReLU(True)
-        #     ),  # 128 -> 64
-        #
-        #     nn.Sequential(
-        #         # nn.ReflectionPad2d(3),
-        #         nn.Conv2d(in_channels=dim // 8 * cat, out_channels=3, kernel_size=1, stride=1, padding=0)
-        #     )   # 64 -> 3
-        #     ])
+                nn.Conv2d(in_channels=128, out_channels=64, kernel_size=1, stride=1, padding=0),
+                nn.InstanceNorm2d(64, track_running_stats=False),
+                nn.ReLU(True),
+                nn.Conv2d(in_channels=32, out_channels=3, kernel_size=1, stride=1, padding=0))   # 64 -> 3
+
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(in_channels=512, out_channels=512, kernel_size=1, stride=1, padding=1),
+            nn.InstanceNorm2d(512, track_running_stats=False),
+            nn.ReLU(True)
+        )
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(in_channels=256, out_channels=256, kernel_size=1, stride=1, padding=1),
+            nn.Conv2d(in_channels=256, out_channels=256, kernel_size=1, stride=1, padding=2, dilation=2),
+            nn.InstanceNorm2d(256, track_running_stats=False),
+            nn.ReLU(True)
+        )
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(in_channels=128, out_channels=128, kernel_size=1, stride=1, padding=1),
+            nn.Conv2d(in_channels=128, out_channels=128, kernel_size=1, stride=1, padding=2, dilation=2),
+            nn.InstanceNorm2d(128, track_running_stats=False),
+            nn.ReLU(True)
+        )
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=1, stride=1, padding=1),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=1, stride=1, padding=2, dilation=2),
+            nn.InstanceNorm2d(64, track_running_stats=False),
+            nn.ReLU(True)
+        )
+
         self._reset_parameters()
 
     def _reset_parameters(self):  # init weight with xaiver_uniform
@@ -58,24 +74,20 @@ class DecoderCNN(nn.Module):
                 nn.init.kaiming_normal_(p, a=0, mode='fan_in')
 
     def forward(self, x, nts=None, attn_map=None):
-        x = x + self.attention_transfer(x, attn_map)
-        if self.skip_con:
-            x = torch.cat((x, nts[-1].tensors), dim=1)
+        x_attn = self.conv1(self.attention_transfer(x, attn_map))
+        x = torch.cat((x, x_attn), dim=1)
         x = self.dec1(x)
 
-        x = x + self.attention_transfer(x, attn_map)
-        if self.skip_con:
-            x = torch.cat((x, nts[-2].tensors), dim=1)
+        x_attn = self.conv2(self.attention_transfer(x, attn_map))
+        x = torch.cat((x, x_attn), dim=1)
         x = self.dec2(x)
 
-        x = x + self.attention_transfer(x, attn_map)
-        if self.skip_con:
-            x = torch.cat((x, nts[-3].tensors), dim=1)
+        x_attn = self.conv3(self.attention_transfer(x, attn_map))
+        x = torch.cat((x, x_attn), dim=1)
         x = self.dec3(x)
 
-        x = x + self.attention_transfer(x, attn_map)
-        if self.skip_con:
-            x = torch.cat((x, nts[-4].tensors), dim=1)
+        x_attn = self.conv4(self.attention_transfer(x, attn_map))
+        x = torch.cat((x, x_attn), dim=1)
         x = self.dec4(x)
 
         x = (torch.tanh(x) + 1) / 2
