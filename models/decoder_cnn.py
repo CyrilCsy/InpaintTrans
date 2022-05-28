@@ -71,19 +71,19 @@ class DecoderCNN(nn.Module):
                 nn.init.kaiming_normal_(p, a=0, mode='fan_in')
 
     def forward(self, x, nts=None, attn_map=None):
-        x_attn = self.conv1(self.attention_transfer(x, attn_map))
+        x_attn = self.conv1(self.attention_transfer(nts[-1], attn_map))
         x = torch.cat((x, x_attn), dim=1)
         x = self.dec1(x)
 
-        x_attn = self.conv2(self.attention_transfer(x, attn_map))
+        x_attn = self.conv2(self.attention_transfer(nts[-2], attn_map))
         x = torch.cat((x, x_attn), dim=1)
         x = self.dec2(x)
 
-        x_attn = self.conv3(self.attention_transfer(x, attn_map))
+        x_attn = self.conv3(self.attention_transfer(nts[-3], attn_map))
         x = torch.cat((x, x_attn), dim=1)
         x = self.dec3(x)
 
-        x_attn = self.conv4(self.attention_transfer(x, attn_map))
+        x_attn = self.conv4(self.attention_transfer(nts[-4], attn_map))
         x = torch.cat((x, x_attn), dim=1)
         x = self.dec4(x)
 
