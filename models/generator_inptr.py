@@ -47,7 +47,7 @@ class GeneratorInpTrans(nn.Module):
         #                      src_pos_embed=src_pos,
         #                      tgt_pos_embed=tgt_pos)
         x = x.permute(0, 2, 1).reshape(b, c, h, w)
-        attn_map = attn_weights.permute(0, 2, 1)
+        attn_map = attn_weights
         x = self.decoder(x, nts, attn_map)
 
         return x
